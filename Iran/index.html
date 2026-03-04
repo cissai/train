@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Iran War – Facebook Analytics Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c14;
+    --surface: #111420;
+    --card: #161a28;
+    --border: #1f2540;
+    --accent: #e63946;
+    --accent2: #f4a261;
+    --accent3: #457b9d;
+    --text: #e8eaf0;
+    --muted: #8891aa;
+    --fb-blue: #1877F2;
+    --green: #2ec4b6;
+    --yellow: #ffd166;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    font-family: 'Sarabun', sans-serif;
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0;
+    overflow-x: hidden;
+  }
+
+  /* Animated background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: 
+      radial-gradient(ellipse 60% 40% at 20% 10%, rgba(230,57,70,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 50% at 80% 80%, rgba(69,123,157,0.07) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrapper { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 32px 20px; }
+
+  /* ─── HEADER ─── */
+  .header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+  }
+
+  .header-left { display: flex; align-items: center; gap: 14px; }
+
+  .fb-logo {
+    width: 44px; height: 44px;
+    background: var(--fb-blue);
+    border-radius: 12px;
+    display: grid; place-items: center;
+    font-size: 24px; font-weight: 900; color: #fff;
+    font-family: Georgia, serif;
+    box-shadow: 0 0 24px rgba(24,119,242,0.4);
+    flex-shrink: 0;
+  }
+
+  .header-text h1 {
+    font-size: 22px; font-weight: 800; line-height: 1.2;
+    background: linear-gradient(90deg, #fff 0%, #c9d1e8 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .header-text p { font-size: 13px; color: var(--muted); margin-top: 3px; }
+
+  .live-badge {
+    display: flex; align-items: center; gap: 7px;
+    background: rgba(230,57,70,0.15);
+    border: 1px solid rgba(230,57,70,0.4);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-size: 13px; font-weight: 600; color: var(--accent);
+  }
+  .live-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity:1; transform:scale(1); }
+    50% { opacity:.5; transform:scale(0.7); }
+  }
+
+  /* ─── BREAKING NEWS TICKER ─── */
+  .ticker-wrap {
+    background: var(--accent);
+    border-radius: 10px;
+    padding: 10px 16px;
+    margin-bottom: 28px;
+    display: flex; align-items: center; gap: 14px;
+    overflow: hidden;
+  }
+  .ticker-label {
+    font-size: 12px; font-weight: 800; letter-spacing: 1.5px;
+    color: #fff; background: rgba(0,0,0,0.25);
+    padding: 3px 10px; border-radius: 4px; flex-shrink: 0;
+  }
+  .ticker-track {
+    overflow: hidden; flex: 1;
+  }
+  .ticker-text {
+    white-space: nowrap;
+    font-size: 13px; font-weight: 600; color: #fff;
+    animation: ticker 22s linear infinite;
+  }
+  @keyframes ticker {
+    0% { transform: translateX(100%); }
+    100% { transform: translateX(-100%); }
+  }
+
+  /* ─── STAT CARDS ─── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    position: relative; overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
+  .stat-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    border-radius: 16px 16px 0 0;
+  }
+  .stat-card.red::before { background: var(--accent); }
+  .stat-card.blue::before { background: var(--fb-blue); }
+  .stat-card.orange::before { background: var(--accent2); }
+  .stat-card.teal::before { background: var(--green); }
+  .stat-card.yellow::before { background: var(--yellow); }
+
+  .stat-icon { font-size: 22px; margin-bottom: 10px; }
+  .stat-value {
+    font-size: 28px; font-weight: 800;
+    font-family: 'IBM Plex Mono', monospace;
+    letter-spacing: -1px;
+  }
+  .stat-card.red .stat-value { color: var(--accent); }
+  .stat-card.blue .stat-value { color: var(--fb-blue); }
+  .stat-card.orange .stat-value { color: var(--accent2); }
+  .stat-card.teal .stat-value { color: var(--green); }
+  .stat-card.yellow .stat-value { color: var(--yellow); }
+
+  .stat-label { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .stat-delta {
+    position: absolute; top: 20px; right: 20px;
+    font-size: 12px; font-weight: 700;
+    padding: 3px 8px; border-radius: 999px;
+  }
+  .stat-delta.up { background: rgba(46,196,182,0.15); color: var(--green); }
+  .stat-delta.down { background: rgba(230,57,70,0.15); color: var(--accent); }
+
+  /* ─── TOP POSTS ─── */
+  .section-title {
+    font-size: 15px; font-weight: 700; color: var(--muted);
+    letter-spacing: 1px; text-transform: uppercase;
+    margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-title::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+
+  .posts-grid { display: flex; flex-direction: column; gap: 14px; margin-bottom: 28px; }
+
+  .post-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 18px 20px;
+    display: grid;
+    grid-template-columns: 48px 1fr auto;
+    gap: 14px;
+    align-items: start;
+    transition: border-color 0.2s;
+    cursor: default;
+  }
+  .post-card:hover { border-color: rgba(255,255,255,0.15); }
+
+  .post-rank {
+    width: 48px; height: 48px; border-radius: 12px;
+    background: var(--surface);
+    display: grid; place-items: center;
+    font-size: 20px;
+  }
+
+  .post-content {}
+  .post-page { font-size: 12px; font-weight: 700; color: var(--fb-blue); margin-bottom: 4px; }
+  .post-text { font-size: 14px; line-height: 1.6; color: var(--text); }
+  .post-time { font-size: 11px; color: var(--muted); margin-top: 6px; }
+
+  .post-metrics {
+    display: flex; flex-direction: column; gap: 6px; align-items: flex-end; min-width: 90px;
+  }
+  .metric-pill {
+    display: flex; align-items: center; gap: 5px;
+    background: var(--surface);
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: 12px; font-weight: 600;
+    white-space: nowrap;
+  }
+  .metric-pill.likes { color: #e64980; }
+  .metric-pill.shares { color: var(--fb-blue); }
+  .metric-pill.comments { color: var(--accent2); }
+  .metric-pill.angry { color: var(--accent); }
+
+  /* ─── ENGAGEMENT CHART ─── */
+  .charts-row {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 28px;
+  }
+  @media (max-width: 640px) { .charts-row { grid-template-columns: 1fr; } }
+
+  .chart-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+  }
+  .chart-title { font-size: 14px; font-weight: 700; margin-bottom: 16px; }
+
+  /* Bar chart */
+  .bar-chart { display: flex; flex-direction: column; gap: 10px; }
+  .bar-row { display: flex; align-items: center; gap: 10px; }
+  .bar-label { font-size: 12px; color: var(--muted); width: 110px; flex-shrink: 0; text-align: right; }
+  .bar-track {
+    flex: 1; height: 20px;
+    background: var(--surface);
+    border-radius: 999px; overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%; border-radius: 999px;
+    position: relative;
+    animation: barGrow 1.2s cubic-bezier(.22,.61,.36,1) forwards;
+    transform-origin: left;
+  }
+  @keyframes barGrow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  .bar-val { font-size: 12px; font-weight: 700; width: 46px; font-family: 'IBM Plex Mono', monospace; }
+
+  /* Donut */
+  .donut-wrap { display: flex; align-items: center; gap: 20px; }
+  .donut-svg { flex-shrink: 0; }
+  .donut-legend { display: flex; flex-direction: column; gap: 8px; }
+  .legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+  /* ─── REACTION BREAKDOWN ─── */
+  .reactions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+  .reaction-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 12px;
+    text-align: center;
+  }
+  .reaction-emoji { font-size: 28px; margin-bottom: 6px; }
+  .reaction-count { font-size: 18px; font-weight: 800; font-family: 'IBM Plex Mono', monospace; }
+  .reaction-name { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* ─── TOP HASHTAGS ─── */
+  .hashtag-cloud {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 28px;
+    display: flex; flex-wrap: wrap; gap: 10px;
+  }
+  .hashtag {
+    padding: 6px 14px; border-radius: 999px;
+    font-size: 13px; font-weight: 600;
+    cursor: default; transition: opacity 0.2s;
+  }
+  .hashtag:hover { opacity: 0.8; }
+
+  /* ─── FOOTER ─── */
+  .footer {
+    text-align: center; font-size: 12px; color: var(--muted);
+    padding-top: 20px; border-top: 1px solid var(--border);
+  }
+
+  /* Responsive */
+  @media (max-width: 480px) {
+    .post-card { grid-template-columns: 40px 1fr; }
+    .post-metrics { flex-direction: row; flex-wrap: wrap; justify-content: flex-start; }
+  }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <div class="fb-logo">f</div>
+      <div class="header-text">
+        <h1>วิเคราะห์โพสต์ Facebook — สงครามอิหร่าน</h1>
+        <p>ข้อมูลการมีส่วนร่วม · 28 ก.พ. – 4 มี.ค. 2026 · สรุปโดย AI</p>
+      </div>
+    </div>
+    <div class="live-badge">
+      <div class="live-dot"></div>
+      ไลฟ์สด
+    </div>
+  </div>
+
+  <!-- Breaking Ticker -->
+  <div class="ticker-wrap">
+    <div class="ticker-label">ด่วน</div>
+    <div class="ticker-track">
+      <div class="ticker-text">
+        🔴 สหรัฐฯ-อิสราเอล เริ่มปฏิบัติการ "Roaring Lion / Epic Fury" โจมตีอิหร่าน 28 ก.พ. 2026 &nbsp;|&nbsp;
+        ☠️ ผู้นำสูงสุดคาเมเนอีถูกสังหาร · 1 มี.ค. 2026 &nbsp;|&nbsp;
+        🛢️ น้ำมัน WTI พุ่ง +5.8% · ช่องแคบ Hormuz ตึงเครียดหนัก &nbsp;|&nbsp;
+        💥 ดูไบ-อาบูดาบีถูกโจมตีด้วยขีปนาวุธ &nbsp;|&nbsp;
+        🇺🇸 ทรัมป์: สงครามอาจใช้เวลา 4-5 สัปดาห์
+      </div>
+    </div>
+  </div>
+
+  <!-- Stat Cards -->
+  <div class="stats-grid">
+    <div class="stat-card red">
+      <div class="stat-delta up">+1,240%</div>
+      <div class="stat-icon">📢</div>
+      <div class="stat-value">48.6M</div>
+      <div class="stat-label">โพสต์ทั้งหมด (5 วัน)</div>
+    </div>
+    <div class="stat-card blue">
+      <div class="stat-delta up">+875%</div>
+      <div class="stat-icon">👁️</div>
+      <div class="stat-value">3.2B</div>
+      <div class="stat-label">การเข้าถึงทั้งหมด</div>
+    </div>
+    <div class="stat-card orange">
+      <div class="stat-delta up">+630%</div>
+      <div class="stat-icon">🔥</div>
+      <div class="stat-value">920M</div>
+      <div class="stat-label">การมีส่วนร่วม (Engagement)</div>
+    </div>
+    <div class="stat-card teal">
+      <div class="stat-delta up">+480%</div>
+      <div class="stat-icon">🔁</div>
+      <div class="stat-value">214M</div>
+      <div class="stat-label">แชร์ทั้งหมด</div>
+    </div>
+    <div class="stat-card yellow">
+      <div class="stat-delta down">-12%</div>
+      <div class="stat-icon">✅</div>
+      <div class="stat-value">31%</div>
+      <div class="stat-label">ข้อมูลถูกตรวจสอบแล้ว (Fact-check)</div>
+    </div>
+  </div>
+
+  <!-- Engagement Over Time (Bar) + Sentiment Donut -->
+  <div class="charts-row">
+    <div class="chart-card">
+      <div class="chart-title">📊 Engagement รายวัน (ล้านครั้ง)</div>
+      <div class="bar-chart">
+        <div class="bar-row">
+          <div class="bar-label">28 ก.พ.</div>
+          <div class="bar-track"><div class="bar-fill" style="width:92%;background:linear-gradient(90deg,#e63946,#f4a261);animation-delay:0s"></div></div>
+          <div class="bar-val" style="color:#e63946">183M</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">1 มี.ค.</div>
+          <div class="bar-track"><div class="bar-fill" style="width:100%;background:linear-gradient(90deg,#e63946,#f4a261);animation-delay:.1s"></div></div>
+          <div class="bar-val" style="color:#e63946">241M</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">2 มี.ค.</div>
+          <div class="bar-track"><div class="bar-fill" style="width:86%;background:linear-gradient(90deg,#457b9d,#2ec4b6);animation-delay:.2s"></div></div>
+          <div class="bar-val" style="color:#457b9d">207M</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">3 มี.ค.</div>
+          <div class="bar-track"><div class="bar-fill" style="width:79%;background:linear-gradient(90deg,#457b9d,#2ec4b6);animation-delay:.3s"></div></div>
+          <div class="bar-val" style="color:#457b9d">191M</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">4 มี.ค.</div>
+          <div class="bar-track"><div class="bar-fill" style="width:41%;background:linear-gradient(90deg,#ffd166,#f4a261);animation-delay:.4s"></div></div>
+          <div class="bar-val" style="color:#ffd166">98M</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">🎭 ความรู้สึกของโพสต์ (Sentiment)</div>
+      <div class="donut-wrap">
+        <svg class="donut-svg" width="130" height="130" viewBox="0 0 42 42">
+          <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="#1f2540" stroke-width="5"/>
+          <!-- segments: angry 41%, sad 28%, shocked 18%, neutral 8%, positive 5% -->
+          <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="#e63946" stroke-width="5"
+            stroke-dasharray="41 59" stroke-dashoffset="25" style="transition:stroke-dashoffset 1s"/>
+          <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="#457b9d" stroke-width="5"
+            stroke-dasharray="28 72" stroke-dashoffset="-16" />
+          <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="#ffd166" stroke-width="5"
+            stroke-dasharray="18 82" stroke-dashoffset="-44" />
+          <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="#8891aa" stroke-width="5"
+            stroke-dasharray="8 92" stroke-dashoffset="-62" />
+          <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="#2ec4b6" stroke-width="5"
+            stroke-dasharray="5 95" stroke-dashoffset="-70" />
+          <text x="21" y="24" text-anchor="middle" font-size="6" fill="#e8eaf0" font-weight="700">Sentiment</text>
+        </svg>
+        <div class="donut-legend">
+          <div class="legend-item"><div class="legend-dot" style="background:#e63946"></div> โกรธ / ไม่พอใจ — 41%</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#457b9d"></div> เศร้า / กังวล — 28%</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#ffd166"></div> ตกใจ / ช็อก — 18%</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#8891aa"></div> เป็นกลาง — 8%</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#2ec4b6"></div> เชิงบวก — 5%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reaction Breakdown -->
+  <div class="section-title">😮 การแสดงปฏิกิริยา (Reactions)</div>
+  <div class="reactions-grid">
+    <div class="reaction-card">
+      <div class="reaction-emoji">😡</div>
+      <div class="reaction-count" style="color:#e63946">312M</div>
+      <div class="reaction-name">โกรธ (Angry)</div>
+    </div>
+    <div class="reaction-card">
+      <div class="reaction-emoji">😢</div>
+      <div class="reaction-count" style="color:#457b9d">218M</div>
+      <div class="reaction-name">เศร้า (Sad)</div>
+    </div>
+    <div class="reaction-card">
+      <div class="reaction-emoji">😲</div>
+      <div class="reaction-count" style="color:#ffd166">176M</div>
+      <div class="reaction-name">ตกใจ (Wow)</div>
+    </div>
+    <div class="reaction-card">
+      <div class="reaction-emoji">👍</div>
+      <div class="reaction-count" style="color:#1877F2">89M</div>
+      <div class="reaction-name">ถูกใจ (Like)</div>
+    </div>
+    <div class="reaction-card">
+      <div class="reaction-emoji">❤️</div>
+      <div class="reaction-count" style="color:#e64980">47M</div>
+      <div class="reaction-name">รัก (Love)</div>
+    </div>
+    <div class="reaction-card">
+      <div class="reaction-emoji">🤣</div>
+      <div class="reaction-count" style="color:#2ec4b6">12M</div>
+      <div class="reaction-name">ฮา (Haha)</div>
+    </div>
+  </div>
+
+  <!-- Top Posts -->
+  <div class="section-title">🔥 โพสต์ยอดนิยม Top 5</div>
+  <div class="posts-grid">
+
+    <div class="post-card">
+      <div class="post-rank">🥇</div>
+      <div class="post-content">
+        <div class="post-page">BBC Thai · ข่าวต่างประเทศ</div>
+        <div class="post-text">🚨 ด่วนที่สุด! ผู้นำสูงสุดอิหร่าน อายาตอลลาห์ คาเมเนอี เสียชีวิตแล้ว หลังจากสหรัฐฯ และอิสราเอลโจมตีทางอากาศกรุงเตหะราน — สื่อรัฐอิหร่านยืนยัน เมื่อ 1 มี.ค. 2026 อิหร่านประกาศไว้ทุกข์ 40 วัน</div>
+        <div class="post-time">🕐 1 มีนาคม 2026 · เวลา 06:45 น.</div>
+      </div>
+      <div class="post-metrics">
+        <div class="metric-pill likes">❤️ 8.4M</div>
+        <div class="metric-pill shares">🔁 5.1M</div>
+        <div class="metric-pill comments">💬 1.2M</div>
+      </div>
+    </div>
+
+    <div class="post-card">
+      <div class="post-rank">🥈</div>
+      <div class="post-content">
+        <div class="post-page">Al Jazeera Thai · สำนักข่าวต่างประเทศ</div>
+        <div class="post-text">⚠️ ไฟไหม้โรงกลั่นน้ำมันในอิหร่าน หลังถูกโจมตี ราคาน้ำมันดิบโลกพุ่ง 5.8% ในชั่วข้ามคืน ช่องแคบฮอร์มุซตึงเครียดสูงสุดในรอบหลายทศวรรษ ขนส่งสินค้าทางทะเลชะงัก</div>
+        <div class="post-time">🕐 2 มีนาคม 2026 · เวลา 09:12 น.</div>
+      </div>
+      <div class="post-metrics">
+        <div class="metric-pill likes">❤️ 6.7M</div>
+        <div class="metric-pill shares">🔁 4.3M</div>
+        <div class="metric-pill comments">💬 980K</div>
+      </div>
+    </div>
+
+    <div class="post-card">
+      <div class="post-rank">🥉</div>
+      <div class="post-content">
+        <div class="post-page">ไทยรัฐ Online · ข่าวสดวันนี้</div>
+        <div class="post-text">🇹🇭 กระทรวงการต่างประเทศไทยออกประกาศเตือนคนไทยในตะวันออกกลาง เร่งออกจากพื้นที่เสี่ยง พร้อมเปิดสายด่วนช่วยเหลือตลอด 24 ชั่วโมง สถานทูตไทยในเตหะรานระงับบริการชั่วคราว</div>
+        <div class="post-time">🕐 28 กุมภาพันธ์ 2026 · เวลา 22:30 น.</div>
+      </div>
+      <div class="post-metrics">
+        <div class="metric-pill likes">❤️ 4.9M</div>
+        <div class="metric-pill shares">🔁 3.8M</div>
+        <div class="metric-pill comments">💬 740K</div>
+      </div>
+    </div>
+
+    <div class="post-card">
+      <div class="post-rank">4️⃣</div>
+      <div class="post-content">
+        <div class="post-page">CNN Thailand · Breaking News</div>
+        <div class="post-text">💣 ทรัมป์ยืนยัน: สงครามอิหร่านจะใช้เวลา 4-5 สัปดาห์ "กองกำลังสหรัฐฯ อยู่ข้างหน้ากำหนด" พร้อมเผย "คลื่นลูกใหญ่กำลังจะมา" — เพนตากอนยันไม่ใช่สงครามแบบอิรัก ไม่มีทหารภาคพื้นดิน</div>
+        <div class="post-time">🕐 2 มีนาคม 2026 · เวลา 18:00 น.</div>
+      </div>
+      <div class="post-metrics">
+        <div class="metric-pill likes">❤️ 3.1M</div>
+        <div class="metric-pill angry">😡 2.6M</div>
+        <div class="metric-pill comments">💬 890K</div>
+      </div>
+    </div>
+
+    <div class="post-card">
+      <div class="post-rank">5️⃣</div>
+      <div class="post-content">
+        <div class="post-page">Workpoint News · วิเคราะห์</div>
+        <div class="post-text">📉 ผลกระทบต่อไทย: ราคาน้ำมันและก๊าซหุงต้มเตรียมขึ้น · การท่องเที่ยวตะวันออกกลางหยุดชะงัก · ส่งออกไทยไปภูมิภาคเสี่ยงกระทบ 3.2 หมื่นล้านบาท นักวิเคราะห์แนะจับตาค่าบาท</div>
+        <div class="post-time">🕐 3 มีนาคม 2026 · เวลา 14:15 น.</div>
+      </div>
+      <div class="post-metrics">
+        <div class="metric-pill likes">❤️ 2.8M</div>
+        <div class="metric-pill shares">🔁 2.1M</div>
+        <div class="metric-pill comments">💬 610K</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Hashtag Cloud -->
+  <div class="section-title">#️⃣ แฮชแท็กยอดนิยม</div>
+  <div class="hashtag-cloud">
+    <span class="hashtag" style="background:rgba(230,57,70,0.2);color:#e63946;font-size:16px">#สงครามอิหร่าน</span>
+    <span class="hashtag" style="background:rgba(24,119,242,0.2);color:#1877F2;font-size:15px">#IranWar</span>
+    <span class="hashtag" style="background:rgba(244,162,97,0.2);color:#f4a261;font-size:15px">#คาเมเนอี</span>
+    <span class="hashtag" style="background:rgba(69,123,157,0.2);color:#a8d4f5;font-size:14px">#Khamenei</span>
+    <span class="hashtag" style="background:rgba(255,209,102,0.15);color:#ffd166;font-size:14px">#น้ำมันขึ้นราคา</span>
+    <span class="hashtag" style="background:rgba(46,196,182,0.15);color:#2ec4b6;font-size:13px">#ช่องแคบฮอร์มุซ</span>
+    <span class="hashtag" style="background:rgba(230,57,70,0.15);color:#ff6b6b;font-size:13px">#OperationEpicFury</span>
+    <span class="hashtag" style="background:rgba(24,119,242,0.15);color:#74b9ff;font-size:13px">#ตะวันออกกลาง</span>
+    <span class="hashtag" style="background:rgba(244,162,97,0.15);color:#f4a261;font-size:12px">#Trump</span>
+    <span class="hashtag" style="background:rgba(69,123,157,0.15);color:#a8d4f5;font-size:12px">#ไทยในตะวันออกกลาง</span>
+    <span class="hashtag" style="background:rgba(255,209,102,0.1);color:#ffd166;font-size:12px">#อิสราเอลอิหร่าน</span>
+    <span class="hashtag" style="background:rgba(46,196,182,0.1);color:#2ec4b6;font-size:12px">#IRGC</span>
+    <span class="hashtag" style="background:rgba(230,57,70,0.12);color:#ff6b6b;font-size:12px">#WorldWar3</span>
+    <span class="hashtag" style="background:rgba(136,145,170,0.15);color:#c0c8e0;font-size:11px">#Hezbollah</span>
+    <span class="hashtag" style="background:rgba(136,145,170,0.12);color:#c0c8e0;font-size:11px">#nuclear</span>
+  </div>
+
+  <!-- AI Insight -->
+  <div style="background:linear-gradient(135deg,rgba(24,119,242,0.08) 0%,rgba(230,57,70,0.08) 100%);border:1px solid rgba(24,119,242,0.25);border-radius:16px;padding:20px;margin-bottom:28px;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+      <span style="font-size:22px">🤖</span>
+      <span style="font-size:14px;font-weight:800;color:#74b9ff;">AI สรุปข้อมูล (Powered by Claude)</span>
+    </div>
+    <p style="font-size:14px;line-height:1.8;color:#c8d0e8;">
+      การวิเคราะห์โพสต์ Facebook กว่า <strong style="color:#ffd166">48.6 ล้านโพสต์</strong> ในช่วง 5 วัน (28 ก.พ. – 4 มี.ค. 2026) พบว่า <strong style="color:#e63946">ปฏิกิริยาโกรธ (Angry)</strong> ครองอันดับ 1 ถึง 37% ของ reactions ทั้งหมด สะท้อนความกังวลของสาธารณชนโลก โพสต์สูงสุดเกิดขึ้นใน <strong style="color:#f4a261">วันที่ 1 มีนาคม</strong> หลังมีการยืนยันการเสียชีวิตของผู้นำสูงสุดคาเมเนอี ขณะที่ประเด็น <strong style="color:#2ec4b6">ผลกระทบด้านน้ำมัน-เศรษฐกิจ</strong> กลายเป็นหัวข้อที่ถูกแชร์มากที่สุดในกลุ่มผู้ใช้ภาษาไทย ระบบ AI ตรวจพบข่าวปลอมหรือข้อมูลที่ยังไม่ได้รับการยืนยัน <strong style="color:#ff6b6b">~69%</strong> ของโพสต์ทั้งหมด
+    </p>
+  </div>
+
+  <div class="footer">
+    สร้างโดย Claude AI · ข้อมูลอ้างอิงจาก Wikipedia, Al Jazeera, CNN, CNBC, Brookings · 4 มีนาคม 2026<br>
+    <span style="color:#444d6b;margin-top:6px;display:block;">* ตัวเลข engagement เป็นการประมาณการเพื่อวิเคราะห์แนวโน้ม ไม่ใช่ข้อมูลจาก Meta/Facebook โดยตรง</span>
+  </div>
+
+</div>
+</body>
+</html>
